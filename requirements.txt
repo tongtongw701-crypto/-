@@ -1,0 +1,50 @@
+# ============================================================
+# Legal QA System - Python Dependencies
+# Python >= 3.9
+# ============================================================
+
+# --- Core Runtime ---
+
+# Environment variable management (.env file)
+python-dotenv>=1.0.0
+
+# RAG framework
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-text-splitters>=0.2.0
+
+# Vector database
+chromadb>=0.4.0
+
+# Text embedding model (BGE-large-zh-v1.5 etc.)
+sentence-transformers>=2.2.0
+
+# HTTP requests
+requests>=2.28.0
+urllib3>=1.26.0
+
+# HTML parsing (web search results)
+beautifulsoup4>=4.12.0
+
+# Word document processing (legal .docx reading)
+python-docx>=0.8.11
+docx2txt>=0.8
+
+# Chinese word segmentation
+jieba>=0.42.1
+
+# Web UI
+streamlit>=1.30.0
+
+# --- Evaluation (only needed for evaluate_rag.py / eval/) ---
+
+# Data processing
+pandas>=1.5.0
+numpy>=1.24.0
+
+# RAG evaluation framework
+datasets>=2.14.0
+ragas>=0.1.0
+
+# LangChain OpenAI compatible interface
+langchain-openai>=0.1.0

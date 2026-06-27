@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pdftotext -layout \"西安电子科技大学-王彤彤-个人简历\\(2\\).pdf\" -)",
+      "Bash(mkdir -p docs scripts data/laws)",
+      "Bash(mv \"功能说明与技术参数\\(1\\).docx\" \"技术文档\\(1\\).docx\" \"用户使用手册\\(1\\).docx\" \"部署说明\\(1\\).docx\" \"需求分析说明书.docx\" docs/)",
+      "Bash(python -c \"from dotenv import load_dotenv; print\\('python-dotenv OK'\\)\")",
+      "Bash(python -c \"from huggingface_hub import snapshot_download; print\\('huggingface_hub OK'\\)\")",
+      "Bash(HF_ENDPOINT=https://hf-mirror.com python -c ' *)",
+      "Bash(ls -la *.bin *.incomplete)",
+      "Bash(du -sh .)",
+      "Bash(rm -rf bge-large-zh-v1.5/.cache bge-large-zh-v1.5/*.incomplete)",
+      "Bash(rm -rf bge-large-zh-v1.5)",
+      "Bash(git lfs *)",
+      "Bash(git clone *)",
+      "Bash(rm -rf bge-large-zh-v1.5-tmp)",
+      "Bash(HF_ENDPOINT=https://hf-mirror.com huggingface-cli download BAAI/bge-large-zh-v1.5 --local-dir bge-large-zh-v1.5 --resume-download)",
+      "Bash(pip install *)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('legal_qa_app.py', doraise=True\\); print\\('OK'\\)\")",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('src/ui/streamlit_app.py', doraise=True\\); print\\('OK'\\)\")",
+      "Bash(chmod +x \"c:\\\\Users\\\\ASUSA\\\\Desktop\\\\法律智能问答\\\\setup.sh\")",
+      "Bash(\".venv\\\\Scripts\\\\python.exe\" -m pip install torch --index-url https://download.pytorch.org/whl/cpu --force-reinstall)",
+      "Bash(\".venv\\\\Scripts\\\\python.exe\" -m pip install torch --index-url https://download.pytorch.org/whl/cpu --force-reinstall -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn)"
+    ]
+  }
+}

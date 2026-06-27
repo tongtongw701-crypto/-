@@ -1,0 +1,55 @@
+# ============================================================
+# 法律智能问答系统 - Docker Compose 编排
+#
+# 使用方式:
+#   1. 复制环境变量: cp .env.example .env  (填入 API Key)
+#   2. 初始化向量库: docker compose run --rm app python init_vector_db.py
+#   3. 启动服务:     docker compose up -d
+#   4. 访问:         http://localhost:8501
+#   5. 停止:         docker compose down
+# ============================================================
+
+services:
+  # --- Chroma 向量数据库服务 ---
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: legal-qa-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- 法律问答应用 ---
+  app:
+    build: .
+    container_name: legal-qa-app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data/laws:/app/Database:ro         # 法律文档 (只读)
+      - app_vector_db:/app/vector_db          # 向量库持久化
+      - app_logs:/app/logs                    # 日志持久化
+    environment:
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - CHROMA_SERVER_URL=http://chromadb:8000
+    depends_on:
+      chromadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+    name: legal-qa-chroma-data
+  app_vector_db:
+    name: legal-qa-vector-db
+  app_logs:
+    name: legal-qa-logs

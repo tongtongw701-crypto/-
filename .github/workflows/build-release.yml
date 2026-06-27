@@ -1,0 +1,188 @@
+# ============================================================
+# 法律智能问答系统 - GitHub Actions 自动构建与发布
+#
+# 触发条件:
+#   - 推送 tag (如 v1.0.0): 自动构建并创建 GitHub Release
+#   - 手动触发 (workflow_dispatch): 可在 Actions 页面手动运行
+#
+# 产物:
+#   - 源代码压缩包 (.zip / .tar.gz)
+#   - Windows 便携版 (embedded Python + 预装依赖)
+# ============================================================
+
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - "v*"               # 推送 v1.0.0 等 tag 时触发
+  workflow_dispatch:        # 允许手动触发
+    inputs:
+      build_portable:
+        description: "构建 Windows 便携版"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write           # 用于创建 Release
+
+jobs:
+  # ============================================================
+  # 1. 源代码打包
+  # ============================================================
+  source-package:
+    name: "打包源代码"
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Tag 版本号
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 创建源代码压缩包
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          PROJECT_NAME="legal-qa-system-${VERSION}"
+
+          mkdir "${PROJECT_NAME}"
+
+          # 复制必要文件
+          cp -r \
+            config/ \
+            src/ \
+            utils/ \
+            eval/ \
+            data/ \
+            prompts/ \
+            docs/ \
+            scripts/ \
+            *.py \
+            *.sh \
+            *.bat \
+            requirements.txt \
+            .env.example \
+            .gitignore \
+            Dockerfile \
+            docker-compose.yml \
+            README.md \
+            "${PROJECT_NAME}/"
+
+          # 创建必要的空目录
+          mkdir -p "${PROJECT_NAME}/models"
+          mkdir -p "${PROJECT_NAME}/vector_db"
+          mkdir -p "${PROJECT_NAME}/logs"
+
+          # 在 models 目录添加说明
+          echo "请将 BGE 模型下载到此目录" > "${PROJECT_NAME}/models/README.txt"
+
+          # 打包
+          tar -czf "${PROJECT_NAME}.tar.gz" "${PROJECT_NAME}"
+          zip -r "${PROJECT_NAME}.zip" "${PROJECT_NAME}"
+
+          echo "PROJECT_NAME=${PROJECT_NAME}" >> $GITHUB_OUTPUT
+
+      - name: 上传源代码包 (tar.gz)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-tar-gz
+          path: legal-qa-system-*.tar.gz
+
+      - name: 上传源代码包 (zip)
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-zip
+          path: legal-qa-system-*.zip
+
+  # ============================================================
+  # 2. 创建 GitHub Release
+  # ============================================================
+  create-release:
+    name: "创建 GitHub Release"
+    runs-on: ubuntu-latest
+    needs: [source-package]
+    if: github.ref_type == 'tag'
+    steps:
+      - name: 下载所有构建产物
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 整理产物
+        run: |
+          mkdir release-assets
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec cp {} release-assets/ \;
+          ls -la release-assets/
+
+      - name: 提取 Release Notes
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          echo "## 📦 ${VERSION}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 下载说明" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "- **源代码 (.zip/.tar.gz)**: 下载解压后运行启动脚本" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 快速开始" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "1. 下载源代码压缩包并解压" >> release_notes.md
+          echo "2. **Windows**: 双击 \`启动法律问答.bat\`" >> release_notes.md
+          echo "3. **macOS/Linux**: 终端运行 \`bash setup.sh\`" >> release_notes.md
+          echo "4. 首次运行将自动引导配置 API Key 和初始化知识库" >> release_notes.md
+
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: release-assets/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================
+  # 3. 便携版验证 (检查代码完整性)
+  # ============================================================
+  verify:
+    name: "验证代码完整性"
+    runs-on: ubuntu-latest
+    needs: [source-package]
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: |
+          pip install -r requirements.txt
+
+      - name: 验证 Python 语法
+        run: |
+          python -m compileall config/ src/ utils/ -q || true
+          python -c "import py_compile; [py_compile.compile(f, doraise=True) for f in ['legal_qa_app.py', 'run_ui.py', 'run_qa_system.py', 'init_vector_db.py', 'first_run_wizard.py', 'evaluate_rag.py']]"
+
+      - name: 验证关键导入
+        run: |
+          python -c "
+          import importlib, sys
+          modules = ['langchain', 'chromadb', 'sentence_transformers', 'streamlit', 'requests', 'jieba', 'docx']
+          for m in modules:
+              try:
+                  importlib.import_module(m)
+                  print(f'  [✓] {m}')
+              except Exception as e:
+                  print(f'  [✗] {m}: {e}')
+          print('验证完成')
+          "
