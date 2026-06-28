@@ -1,6 +1,6 @@
 # ⚖️ 法律智能问答系统
 
-基于 **RAG（检索增强生成）** 架构的中文法律智能问答系统，支持 7 部法律的法条检索、网络信息增强和赔偿金额计算。
+基于 **RAG（检索增强生成）** 架构的中文法律智能问答系统，支持法律的法条检索、网络信息增强和赔偿金额计算。
 
 <!-- TODO: 替换为实际截图 -->
 <!-- ![界面截图](docs/images/screenshot.png) -->
@@ -198,7 +198,7 @@ python eval/analyze_eval.py
 | 中华人民共和国劳动合同法 | 2012 修正 |
 | 中华人民共和国民事诉讼法 | 2023 修正 |
 | 中华人民共和国公司法 | 2023 修订 |
-
+(待扩展)
 ## 🛠️ 技术栈
 
 | 层级 | 技术 |
@@ -211,30 +211,6 @@ python eval/analyze_eval.py
 | 评估 | RAGAS |
 | 部署 | Docker / Docker Compose |
 | 打包 | PyInstaller / portable |
-
-## 📦 发布到 GitHub Releases
-
-本项目已配置 GitHub Actions 自动构建。发布新版本只需：
-
-```bash
-# 1. 确保所有更改已提交
-git add .
-git commit -m "v1.0.0 发布准备"
-
-# 2. 创建版本 tag 并推送
-git tag v1.0.0
-git push origin main --tags
-```
-
-GitHub Actions 将自动：
-- 打包源代码为 .zip / .tar.gz
-- 创建 GitHub Release 并上传产物
-- 验证代码完整性
-
-用户从 [Releases](https://github.com/你的用户名/legal-qa-system/releases) 页面下载后，解压双击即可使用。
-
-> **手动打包**: 运行 `python package_portable.py` 可创建便携版压缩包。
-
 ---
 
 ## ⚠️ 免责声明
